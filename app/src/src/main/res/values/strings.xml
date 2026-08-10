@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Attendance Manager</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_attendance">Attendance</string>
+    <string name="nav_students">Manage Students</string>
+    <string name="nav_classes">Manage Classes</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Common -->
+    <string name="action_calendar">Pick a date</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_back">Back</string>
+    <string name="action_save">Save</string>
+    <string name="action_close">Close</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_open">Open</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_add">Add</string>
+</resources>
