@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Bootstrap theme for the Activity window before Compose renders.
+        We use the plain Android framework NoActionBar theme here because this
+        project is Compose-only and does not depend on com.google.android.material
+        (which would be needed for Theme.Material3.*).
+
+        All Material 3 theming — transparent system bars, tonal surfaces,
+        dynamic color, and icon contrast — is applied by CRAttendanceTheme's
+        SideEffect block in Theme.kt immediately after the first Compose frame.
+    -->
+    <style name="Theme.CRAttendance" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
+
