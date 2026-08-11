@@ -18,13 +18,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.crattendance.data.model.StudentEntity
-import com.crattendance.ui.components.AddStudentSheet
-import com.crattendance.ui.components.AppBottomBar
+import com.crattendance.ui.components.AddStudentDialog
 import com.crattendance.ui.components.AppTopBar
 import com.crattendance.ui.components.EmptyState
 import com.crattendance.ui.components.ReorderableStudentList
 import com.crattendance.ui.components.StudentPopup
-import com.crattendance.ui.navigation.Routes
 import com.crattendance.utils.IntentHelper
 import com.crattendance.viewmodel.ManageStudentsViewModel
 import com.crattendance.viewmodel.StudentSaveResult
@@ -33,7 +31,6 @@ import com.crattendance.viewmodel.activityViewModel
 /** Screen 3 — add, edit, delete and drag-reorder students. */
 @Composable
 fun ManageStudentsScreen(
-    onNavigateToTab: (String) -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val viewModel: ManageStudentsViewModel = activityViewModel()
@@ -71,6 +68,10 @@ fun ManageStudentsScreen(
                 editingStudent = student
                 selectedStudent = null
             },
+            onDelete = {
+                viewModel.deleteStudent(student)
+                selectedStudent = null
+            },
             onDismiss = { selectedStudent = null }
         )
     }
@@ -82,7 +83,7 @@ fun ManageStudentsScreen(
                 onSettings = onOpenSettings
             )
         },
-        bottomBar = { AppBottomBar(Routes.STUDENTS, onNavigateToTab) }
+        bottomBar = {}
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             Button(
@@ -106,7 +107,7 @@ fun ManageStudentsScreen(
     }
 
     if (sheetTarget != null || showAddSheet) {
-        AddStudentSheet(
+        AddStudentDialog(
             initial = sheetTarget,
             onSave = { student -> viewModel.saveStudent(student) },
             onDismiss = {

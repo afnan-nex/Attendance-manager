@@ -10,11 +10,12 @@ import java.util.Locale
 object DateUtils {
 
     private val TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
-    private val ISO_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH)
-    private val FILE_DATE = DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ENGLISH)
-    private val TIME_FILE = DateTimeFormatter.ofPattern("HHmm", Locale.ENGLISH)
-    private val LONG_DATE = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.ENGLISH)
-    private val MONTH_YEAR = DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)
+    private val ISO_DATE    = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH)
+    private val FILE_DATE   = DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ENGLISH)
+    private val TIME_FILE   = DateTimeFormatter.ofPattern("HHmm", Locale.ENGLISH)
+    private val LONG_DATE   = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.ENGLISH)
+    private val MONTH_YEAR  = DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)
+    private val SHORT_DATE  = DateTimeFormatter.ofPattern("d-MMM", Locale.ENGLISH)  // e.g. "15-Jan"
 
     /** Monday of the week containing [date]. */
     fun weekStart(date: LocalDate): LocalDate =
@@ -24,6 +25,28 @@ object DateUtils {
     fun weekDays(anchor: LocalDate): List<LocalDate> {
         val monday = weekStart(anchor)
         return (0 until 7).map { monday.plusDays(it.toLong()) }
+    }
+
+    /**
+     * A large scrollable range centered on today:
+     * [today - SCROLL_BEFORE .. today + SCROLL_AFTER] (inclusive).
+     * Used by the horizontally-scrollable date strip.
+     */
+    const val SCROLL_BEFORE = 365L
+    const val SCROLL_AFTER  = 365L
+
+    fun scrollableDays(): List<LocalDate> {
+        val today  = LocalDate.now()
+        val start  = today.minusDays(SCROLL_BEFORE)
+        val count  = (SCROLL_BEFORE + 1 + SCROLL_AFTER).toInt()
+        return (0 until count).map { start.plusDays(it.toLong()) }
+    }
+
+    /** Index of [date] in the list returned by [scrollableDays]. */
+    fun scrollableDayIndex(date: LocalDate): Int {
+        val today = LocalDate.now()
+        return (SCROLL_BEFORE + date.toEpochDay() - today.toEpochDay()).toInt()
+            .coerceIn(0, (SCROLL_BEFORE + SCROLL_AFTER).toInt())
     }
 
     /**
@@ -57,4 +80,7 @@ object DateUtils {
 
     /** e.g. "Jan 2025". */
     fun formatMonthYear(date: LocalDate): String = date.format(MONTH_YEAR)
+
+    /** e.g. "15-Jan" — compact header for Excel date columns. */
+    fun formatShort(date: LocalDate): String = date.format(SHORT_DATE)
 }

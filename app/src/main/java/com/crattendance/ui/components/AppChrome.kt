@@ -10,8 +10,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.crattendance.ui.navigation.BottomTab
 import com.crattendance.ui.theme.CrIcons
 
@@ -46,28 +50,76 @@ fun AppTopBar(
             }
             actions()
         },
+        // Let M3 tonal-surface coloring come through automatically.
         colors = TopAppBarDefaults.topAppBarColors()
     )
 }
 
+/**
+ * Bottom navigation bar.
+ *
+ * ### Performance improvements over the previous version
+ *
+ * 1. **`navController` parameter instead of `currentRoute: String?`** — the
+ *    back-stack state is now observed *inside* this Composable via
+ *    [currentBackStackEntryAsState].  Only `AppBottomBar` recomposes when the
+ *    route changes; the entire `NavHost` (and the screens inside it) is no
+ *    longer invalidated on every tab switch.
+ *
+ * 2. **`derivedStateOf`** — the `currentRoute` string is wrapped in a
+ *    `derivedStateOf` so that even if the back-stack entry object changes (e.g.
+ *    args update) but the *route* string stays the same, none of the
+ *    `NavigationBarItem` lambdas are re-invoked.
+ *
+ * 3. **Removed `tint = Color.Gray`** — the hardcoded grey override was
+ *    bypassing M3 `NavigationBarItemColors`, which already handles
+ *    active/inactive icon and label tints correctly (including tonal-surface
+ *    elevation and accessibility contrast).  Removing it restores proper M3
+ *    theming and eliminates a per-frame `Color` allocation.
+ */
 @Composable
-fun AppBottomBar(
-    currentRoute: String?,
-    onNavigateToTab: (String) -> Unit
-) {
+fun AppBottomBar(navController: NavController) {
+    // Observe the back-stack ONLY inside this Composable.
+    // Any route change recomposes AppBottomBar, not its callers.
+    val backStackEntry by navController.currentBackStackEntryAsState()
+
+    // derivedStateOf: downstream items only recompose if the route *string*
+    // changes — not on every backStackEntry object replacement.
+    val currentRoute by remember {
+        derivedStateOf { backStackEntry?.destination?.route }
+    }
+
     NavigationBar {
         BottomTab.all.forEach { tab ->
+            // Per-item derivedStateOf: this item's lambda only reruns when its
+            // own `isSelected` flips — other tab selections don't touch it.
+            val isSelected by remember(tab.route) {
+                derivedStateOf { currentRoute == tab.route }
+            }
             NavigationBarItem(
-                selected = currentRoute == tab.route,
-                onClick = { onNavigateToTab(tab.route) },
+                selected   = isSelected,
+                onClick    = {
+                    // Navigate only if we're not already on this tab.
+                    if (!isSelected) {
+                        navController.navigate(tab.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
                 icon = {
+                    // No manual tint — NavigationBarItemColors applies
+                    // the correct M3 active/inactive colours automatically.
                     Icon(
-                        imageVector = tab.icon,
-                        contentDescription = tab.label,
-                        tint = if (currentRoute == tab.route) Color.Unspecified else Color.Gray
+                        imageVector    = tab.icon,
+                        contentDescription = tab.label
                     )
                 },
-                label = { Text(tab.label) }
+                label          = { Text(tab.label) },
+                alwaysShowLabel = true  // M3 standard: labels always visible
             )
         }
     }

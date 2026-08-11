@@ -1,5 +1,6 @@
 package com.crattendance.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +21,6 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -36,14 +36,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.crattendance.data.model.StudentEntity
-import com.crattendance.ui.components.AppBottomBar
 import com.crattendance.ui.components.AppTopBar
 import com.crattendance.ui.components.AttendanceTable
 import com.crattendance.ui.components.CalendarDialog
 import com.crattendance.ui.components.DateSelector
 import com.crattendance.ui.components.EmptyState
 import com.crattendance.ui.components.StudentPopup
-import com.crattendance.ui.navigation.Routes
 import com.crattendance.ui.theme.CrIcons
 import com.crattendance.utils.DateUtils
 import com.crattendance.utils.IntentHelper
@@ -55,7 +53,6 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AttendanceScreen(
-    onNavigateToTab: (String) -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val viewModel: AttendanceViewModel = activityViewModel()
@@ -103,7 +100,7 @@ fun AttendanceScreen(
                 onSettings = onOpenSettings
             )
         },
-        bottomBar = { AppBottomBar(Routes.ATTENDANCE, onNavigateToTab) }
+        bottomBar = {}
     ) { padding ->
         Column(
             Modifier
@@ -240,40 +237,37 @@ private fun LockStatusRow(
         return
     }
 
-    // Past date.
+    // Past date — whole row is tappable (7 taps to unlock).
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable(onClick = onUnlockToggle)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Icon(
             imageVector = if (unlocked) CrIcons.LockOpen else CrIcons.Lock,
             contentDescription = null,
-            tint = if (unlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            tint = if (unlocked) MaterialTheme.colorScheme.primary
+                   else MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 text = if (unlocked) "Past attendance unlocked"
-                else "Past attendance is locked",
+                       else "Past attendance is locked",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
-            if (!unlocked) {
+            if (!unlocked && unlockTaps > 0) {
                 Text(
-                    text = "Flip the switch to unlock (${unlockTaps}/7)",
+                    text = "$unlockTaps / 7 taps",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
-        if (!unlocked) {
-            Switch(
-                checked = false,
-                onCheckedChange = { onUnlockToggle() }
-            )
-        } else {
+        if (unlocked) {
             Text(
                 text = "Unlocked",
                 style = MaterialTheme.typography.labelMedium,

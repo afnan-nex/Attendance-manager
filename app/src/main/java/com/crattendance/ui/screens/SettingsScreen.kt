@@ -1,7 +1,5 @@
 package com.crattendance.ui.screens
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
@@ -39,23 +38,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.crattendance.MainActivity
 import com.crattendance.data.model.AppSettingsEntity
 import com.crattendance.data.model.ClassEntity
 import com.crattendance.ui.components.AppTopBar
 import com.crattendance.ui.components.SectionHeader
 import com.crattendance.ui.theme.CrIcons
 import com.crattendance.utils.BiometricHelper
-import com.crattendance.utils.CsvExporter
 import com.crattendance.utils.IntentHelper
 import com.crattendance.viewmodel.SettingsViewModel
 import com.crattendance.viewmodel.activityViewModel
 import kotlinx.coroutines.launch
 
-/** Settings — section filter, CSV export/share and biometric lock. */
+/** Settings — section filter, Excel export/share and biometric lock. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -68,7 +68,6 @@ fun SettingsScreen(
 
     var showSectionModal by remember { mutableStateOf(false) }
     var exportMenuExpanded by remember { mutableStateOf(false) }
-    var pendingExport by remember { mutableStateOf<CsvExporter.CsvResult?>(null) }
     // Guards against launching the file picker twice (a second launch while one
     // is active throws IllegalStateException) and turns any export failure into
     // a toast instead of an uncaught crash.
@@ -76,24 +75,6 @@ fun SettingsScreen(
 
     val toast = { msg: String ->
         android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
-    }
-
-    val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("text/csv")
-    ) { uri ->
-        val result = pendingExport
-        pendingExport = null
-        if (uri != null && result != null) {
-            try {
-                context.contentResolver.openOutputStream(uri)?.use { out ->
-                    out.write(result.content.toByteArray(Charsets.UTF_8))
-                } ?: toast("Could not open the file for writing")
-                toast("Exported ${result.fileName}")
-            } catch (e: Exception) {
-                toast("Export failed: ${e.message ?: "unknown error"}")
-            }
-        }
-        exportInProgress = false
     }
 
     val selectedClass = state.classes.firstOrNull { it.id == state.selectedExportClassId }
@@ -196,16 +177,28 @@ fun SettingsScreen(
                             exportInProgress = true
                             scope.launch {
                                 try {
-                                    val result = viewModel.buildExportCsv(id)
+                                    val result = viewModel.buildExportXlsx(id)
                                     if (result == null) {
                                         toast("Selected class no longer exists")
-                                    } else if (IntentHelper.exportCsvIntent(result.fileName)
-                                            .resolveActivity(context.packageManager) == null
-                                    ) {
-                                        toast("No file picker available on this device")
                                     } else {
-                                        pendingExport = result
-                                        exportLauncher.launch(result.fileName)
+                                        val activity = context as? FragmentActivity
+                                        if (activity != null) {
+                                            val mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                            MainActivity.launchCreateDoc(activity, result.fileName, mimeType) { uri ->
+                                                if (uri != null) {
+                                                    try {
+                                                        context.contentResolver.openOutputStream(uri)?.use { out ->
+                                                            out.write(result.bytes)
+                                                        } ?: toast("Could not open the file for writing")
+                                                        toast("Exported ${result.fileName}")
+                                                    } catch (e: Exception) {
+                                                        toast("Export failed: ${e.message ?: "unknown error"}")
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            toast("No activity context available")
+                                        }
                                     }
                                 } catch (e: Exception) {
                                     toast("Export failed: ${e.message ?: "unknown error"}")
@@ -227,11 +220,11 @@ fun SettingsScreen(
                             exportInProgress = true
                             scope.launch {
                                 try {
-                                    val result = viewModel.buildExportCsv(id)
+                                    val result = viewModel.buildExportXlsx(id)
                                     if (result == null) {
                                         toast("Selected class no longer exists")
                                     } else {
-                                        IntentHelper.shareCsv(context, result.fileName, result.content)
+                                        IntentHelper.shareXlsx(context, result.fileName, result.bytes)
                                     }
                                 } catch (e: Exception) {
                                     toast("Share failed: ${e.message ?: "unknown error"}")
@@ -254,7 +247,7 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Filename example: CS-101_Computer-Programming_0930_15-01-2025.csv\nOnly the selected section is exported.",
+                    text = "Filename example: CS-101_Computer-Programming_0930_15-01-2025.xlsx\nOnly the selected section is exported.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -318,6 +311,29 @@ fun SettingsScreen(
                 }
             }
             Spacer(Modifier.height(24.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Developed by AFNAN with ❤️",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.weight(1f))
+                val uriHandler = LocalUriHandler.current
+                IconButton(onClick = { uriHandler.openUri("https://github.com/afnan-nex") }) {
+                    Icon(
+                        imageVector = CrIcons.Github,
+                        contentDescription = "GitHub",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

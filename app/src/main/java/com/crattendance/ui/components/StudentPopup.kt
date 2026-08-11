@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,6 +39,7 @@ fun StudentPopup(
     onOpenWhatsApp: (String) -> Unit,
     onOpenPhone: (String) -> Unit,
     onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -97,13 +99,29 @@ fun StudentPopup(
                 )
 
                 Spacer(Modifier.height(20.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (onEdit != null) {
-                        IconButton(onClick = onEdit) {
-                            Icon(CrIcons.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Delete icon — far left, destructive colour
+                    if (onDelete != null) {
+                        IconButton(onClick = onDelete) {
+                            Icon(
+                                imageVector = CrIcons.Delete,
+                                contentDescription = "Delete",
+                                tint = MaterialTheme.colorScheme.error
+                            )
                         }
                     }
                     Spacer(Modifier.weight(1f))
+                    // Edit button
+                    if (onEdit != null) {
+                        OutlinedButton(
+                            onClick = onEdit,
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) { Text("Edit") }
+                    }
+                    // Close button
                     Button(onClick = onDismiss) { Text("Close") }
                 }
             }

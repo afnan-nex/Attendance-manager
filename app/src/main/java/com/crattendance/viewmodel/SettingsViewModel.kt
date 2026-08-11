@@ -7,7 +7,7 @@ import com.crattendance.data.repository.IAttendanceRepository
 import com.crattendance.data.repository.IClassRepository
 import com.crattendance.data.repository.ISettingsRepository
 import com.crattendance.data.repository.IStudentRepository
-import com.crattendance.utils.CsvExporter
+import com.crattendance.utils.XlsxExporter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,15 +63,15 @@ class SettingsViewModel(
     }
 
     /**
-     * Builds the CSV for the selected class, scoped to the selected section.
-     * Returns null if the class no longer exists.
+     * Builds the Excel (.xlsx) export for the selected class, scoped to the
+     * selected section. Returns null if the class no longer exists.
      */
-    suspend fun buildExportCsv(classId: String): CsvExporter.CsvResult? {
+    suspend fun buildExportXlsx(classId: String): XlsxExporter.XlsxResult? {
         val cls = classRepository.getById(classId) ?: return null
         val section = settingsRepository.get().selectedSection
         val students = studentRepository.getAll()
             .filter { section == "All" || it.section.toString() == section }
         val attendance = attendanceRepository.getForClass(classId)
-        return CsvExporter.build(cls, students, attendance)
+        return XlsxExporter.build(cls, students, attendance)
     }
 }

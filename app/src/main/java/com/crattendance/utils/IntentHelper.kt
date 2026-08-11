@@ -94,6 +94,26 @@ object IntentHelper {
         context.startActivity(Intent.createChooser(send, "Share Attendance"))
     }
 
+    /** Writes xlsx bytes into the app cache and returns a FileProvider URI for sharing. */
+    fun writeXlsxToCache(context: Context, fileName: String, bytes: ByteArray): Uri {
+        val dir = File(context.cacheDir, "exports").apply { mkdirs() }
+        val file = File(dir, fileName)
+        file.writeBytes(bytes)
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
+
+    /** Opens the Android share sheet with the xlsx attached (WhatsApp, Email, Drive…). */
+    fun shareXlsx(context: Context, fileName: String, bytes: ByteArray) {
+        val uri = writeXlsxToCache(context, fileName, bytes)
+        val mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        val send = Intent(Intent.ACTION_SEND)
+            .setType(mimeType)
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .putExtra(Intent.EXTRA_SUBJECT, fileName)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        context.startActivity(Intent.createChooser(send, "Share Attendance"))
+    }
+
     /** Writes the CSV to the Downloads directory (used by tests / non-picker export). */
     fun writeCsvToDownloads(context: Context, fileName: String, content: String): File {
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)

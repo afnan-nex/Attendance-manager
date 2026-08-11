@@ -1,5 +1,7 @@
 package com.crattendance
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -44,8 +46,43 @@ import kotlinx.coroutines.flow.first
 
 class MainActivity : FragmentActivity() {
 
+    companion object {
+        private const val REQ_CREATE_DOC = 1001
+        private var onDocCreated: ((Uri?) -> Unit)? = null
+
+        fun launchCreateDoc(
+            activity: FragmentActivity,
+            fileName: String,
+            mimeType: String,
+            callback: (Uri?) -> Unit
+        ) {
+            onDocCreated = callback
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = mimeType
+                putExtra(Intent.EXTRA_TITLE, fileName)
+            }
+            try {
+                activity.startActivityForResult(intent, REQ_CREATE_DOC)
+            } catch (e: Exception) {
+                callback(null)
+                onDocCreated = null
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQ_CREATE_DOC) {
+            val uri = if (resultCode == RESULT_OK) data?.data else null
+            onDocCreated?.invoke(uri)
+            onDocCreated = null
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             CRAttendanceTheme {
                 AppRoot()

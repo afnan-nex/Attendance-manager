@@ -45,6 +45,7 @@ object CsvExporter {
         }
 
         val csv = buildString {
+            append("\uFEFF")
             appendLine(renderRow(header))
             rows.forEach { appendLine(renderRow(it)) }
         }

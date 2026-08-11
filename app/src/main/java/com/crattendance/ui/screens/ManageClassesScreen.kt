@@ -33,12 +33,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.crattendance.data.model.ClassEntity
-import com.crattendance.ui.components.AddClassSheet
-import com.crattendance.ui.components.AppBottomBar
+import com.crattendance.ui.components.AddClassDialog
 import com.crattendance.ui.components.AppTopBar
 import com.crattendance.ui.components.ClassCard
 import com.crattendance.ui.components.EmptyState
-import com.crattendance.ui.navigation.Routes
 import com.crattendance.ui.theme.CrIcons
 import com.crattendance.viewmodel.ClassSaveResult
 import com.crattendance.viewmodel.ManageClassesViewModel
@@ -47,7 +45,6 @@ import com.crattendance.viewmodel.activityViewModel
 /** Screen 4 — add, edit, delete and hide classes. */
 @Composable
 fun ManageClassesScreen(
-    onNavigateToTab: (String) -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val viewModel: ManageClassesViewModel = activityViewModel()
@@ -80,7 +77,7 @@ fun ManageClassesScreen(
                 onSettings = onOpenSettings
             )
         },
-        bottomBar = { AppBottomBar(Routes.CLASSES, onNavigateToTab) }
+        bottomBar = {}
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             Button(
@@ -125,7 +122,7 @@ fun ManageClassesScreen(
 
     val sheetTarget = if (showAddSheet) null else editingClass
     if (sheetTarget != null || showAddSheet) {
-        AddClassSheet(
+        AddClassDialog(
             initial = sheetTarget,
             onSave = { cls -> viewModel.saveClass(cls) },
             onDismiss = {

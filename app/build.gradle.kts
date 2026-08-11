@@ -68,6 +68,7 @@ dependencies {
 
     implementation(libs.androidx.biometric)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.fastexcel)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

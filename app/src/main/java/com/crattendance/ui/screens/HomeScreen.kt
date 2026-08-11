@@ -18,13 +18,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.crattendance.ui.components.AppBottomBar
 import com.crattendance.ui.components.AppTopBar
 import com.crattendance.ui.components.CalendarDialog
 import com.crattendance.ui.components.ClassCard
 import com.crattendance.ui.components.DateSelector
 import com.crattendance.ui.components.EmptyState
-import com.crattendance.ui.navigation.Routes
 import com.crattendance.utils.DateUtils
 import com.crattendance.viewmodel.HomeViewModel
 import com.crattendance.viewmodel.activityViewModel
@@ -32,7 +30,6 @@ import com.crattendance.viewmodel.activityViewModel
 /** Screen 1 — today's classes for the selected day. */
 @Composable
 fun HomeScreen(
-    onNavigateToTab: (String) -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val viewModel: HomeViewModel = activityViewModel()
@@ -54,8 +51,7 @@ fun HomeScreen(
                 onCalendar = { showCalendar = true },
                 onSettings = onOpenSettings
             )
-        },
-        bottomBar = { AppBottomBar(Routes.HOME, onNavigateToTab) }
+        }
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             DateSelector(
