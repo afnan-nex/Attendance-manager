@@ -105,6 +105,18 @@ object CrIcons {
         )
     }
 
+    /** Document icon with { } brackets — represents a JSON file. */
+    val FileJson: ImageVector by lazy {
+        icon(
+            "FileJson",
+            // Outer document shape
+            "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z" +
+            // { } braces in the document body (smaller, centred)
+            "M9.5 14.5c0 .83-.67 1.5-1.5 1.5v1c1.66 0 3-1.34 3-3s-1.34-3-3-3v1c.83 0 1.5.67 1.5 1.5z" +
+            "M14.5 14.5c0-.83.67-1.5 1.5-1.5v-1c-1.66 0-3 1.34-3 3s1.34 3 3 3v-1c-.83 0-1.5-.67-1.5-1.5z"
+        )
+    }
+
     private fun icon(name: String, pathData: String): ImageVector =
         ImageVector.Builder(
             name = name,

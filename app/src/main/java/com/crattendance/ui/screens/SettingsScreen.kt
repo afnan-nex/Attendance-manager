@@ -50,7 +50,9 @@ import com.crattendance.ui.components.AppTopBar
 import com.crattendance.ui.components.SectionHeader
 import com.crattendance.ui.theme.CrIcons
 import com.crattendance.utils.BiometricHelper
+import com.crattendance.utils.DateUtils
 import com.crattendance.utils.IntentHelper
+import com.crattendance.utils.JsonHelper
 import com.crattendance.viewmodel.SettingsViewModel
 import com.crattendance.viewmodel.activityViewModel
 import kotlinx.coroutines.launch
@@ -253,7 +255,187 @@ fun SettingsScreen(
                 )
             }
 
-            // ---- Section 3: Biometric Security ----
+            // ---- Section 3: Import / Export Students ----
+            SectionHeader("Import / Export Students")
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                // Tap to download a sample JSON template for students
+                IconButton(
+                    onClick = {
+                        if (exportInProgress) return@IconButton
+                        val activity = context as? FragmentActivity ?: return@IconButton
+                        exportInProgress = true
+                        MainActivity.launchCreateDoc(activity, "students_sample.json", "application/json") { uri ->
+                            if (uri != null) {
+                                try {
+                                    context.contentResolver.openOutputStream(uri)?.use { out ->
+                                        out.write(JsonHelper.sampleStudentsJson().toByteArray(Charsets.UTF_8))
+                                    }
+                                    toast("Sample saved: students_sample.json")
+                                } catch (e: Exception) { toast("Failed: ${e.message ?: "error"}") }
+                            }
+                            exportInProgress = false
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = CrIcons.FileJson,
+                        contentDescription = "Download student sample",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                OutlinedButton(
+                    onClick = {
+                        if (exportInProgress) return@OutlinedButton
+                        val activity = context as? FragmentActivity ?: return@OutlinedButton
+                        exportInProgress = true
+                        MainActivity.launchOpenDoc(activity) { uri ->
+                            if (uri == null) { exportInProgress = false; return@launchOpenDoc }
+                            scope.launch {
+                                try {
+                                    val json = context.contentResolver.openInputStream(uri)
+                                        ?.bufferedReader()?.readText() ?: ""
+                                    val msg = viewModel.importStudentsJson(json)
+                                    toast(msg)
+                                } catch (e: Exception) {
+                                    toast("Import failed: ${e.message ?: "unknown error"}")
+                                } finally { exportInProgress = false }
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) { Text("Import") }
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        if (exportInProgress) return@Button
+                        val activity = context as? FragmentActivity ?: return@Button
+                        exportInProgress = true
+                        scope.launch {
+                            try {
+                                val json     = viewModel.exportStudentsJson()
+                                val fileName = "students_${DateUtils.formatFileDate(java.time.LocalDate.now())}.json"
+                                MainActivity.launchCreateDoc(activity, fileName, "application/json") { uri ->
+                                    if (uri != null) {
+                                        try {
+                                            context.contentResolver.openOutputStream(uri)?.use { out ->
+                                                out.write(json.toByteArray(Charsets.UTF_8))
+                                            }
+                                            toast("Exported $fileName")
+                                        } catch (e: Exception) {
+                                            toast("Export failed: ${e.message ?: "unknown error"}")
+                                        }
+                                    }
+                                    exportInProgress = false
+                                }
+                            } catch (e: Exception) {
+                                toast("Export failed: ${e.message ?: "unknown error"}")
+                                exportInProgress = false
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) { Text("Export") }
+            }
+            Spacer(Modifier.height(16.dp))
+
+            // ---- Section 4: Import / Export Classes ----
+            SectionHeader("Import / Export Classes")
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                // Tap to download a sample JSON template for classes
+                IconButton(
+                    onClick = {
+                        if (exportInProgress) return@IconButton
+                        val activity = context as? FragmentActivity ?: return@IconButton
+                        exportInProgress = true
+                        MainActivity.launchCreateDoc(activity, "classes_sample.json", "application/json") { uri ->
+                            if (uri != null) {
+                                try {
+                                    context.contentResolver.openOutputStream(uri)?.use { out ->
+                                        out.write(JsonHelper.sampleClassesJson().toByteArray(Charsets.UTF_8))
+                                    }
+                                    toast("Sample saved: classes_sample.json")
+                                } catch (e: Exception) { toast("Failed: ${e.message ?: "error"}") }
+                            }
+                            exportInProgress = false
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = CrIcons.FileJson,
+                        contentDescription = "Download class sample",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                OutlinedButton(
+                    onClick = {
+                        if (exportInProgress) return@OutlinedButton
+                        val activity = context as? FragmentActivity ?: return@OutlinedButton
+                        exportInProgress = true
+                        MainActivity.launchOpenDoc(activity) { uri ->
+                            if (uri == null) { exportInProgress = false; return@launchOpenDoc }
+                            scope.launch {
+                                try {
+                                    val json = context.contentResolver.openInputStream(uri)
+                                        ?.bufferedReader()?.readText() ?: ""
+                                    val msg = viewModel.importClassesJson(json)
+                                    toast(msg)
+                                } catch (e: Exception) {
+                                    toast("Import failed: ${e.message ?: "unknown error"}")
+                                } finally { exportInProgress = false }
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) { Text("Import") }
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        if (exportInProgress) return@Button
+                        val activity = context as? FragmentActivity ?: return@Button
+                        exportInProgress = true
+                        scope.launch {
+                            try {
+                                val json     = viewModel.exportClassesJson()
+                                val fileName = "classes_${DateUtils.formatFileDate(java.time.LocalDate.now())}.json"
+                                MainActivity.launchCreateDoc(activity, fileName, "application/json") { uri ->
+                                    if (uri != null) {
+                                        try {
+                                            context.contentResolver.openOutputStream(uri)?.use { out ->
+                                                out.write(json.toByteArray(Charsets.UTF_8))
+                                            }
+                                            toast("Exported $fileName")
+                                        } catch (e: Exception) {
+                                            toast("Export failed: ${e.message ?: "unknown error"}")
+                                        }
+                                    }
+                                    exportInProgress = false
+                                }
+                            } catch (e: Exception) {
+                                toast("Export failed: ${e.message ?: "unknown error"}")
+                                exportInProgress = false
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) { Text("Export") }
+            }
+            Spacer(Modifier.height(16.dp))
+
+            // ---- Section 5: Biometric Security ----
             SectionHeader("Biometric Security")
             Surface(
                 shape = MaterialTheme.shapes.medium,

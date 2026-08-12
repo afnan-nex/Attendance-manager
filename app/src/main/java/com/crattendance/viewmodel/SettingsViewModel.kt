@@ -7,6 +7,7 @@ import com.crattendance.data.repository.IAttendanceRepository
 import com.crattendance.data.repository.IClassRepository
 import com.crattendance.data.repository.ISettingsRepository
 import com.crattendance.data.repository.IStudentRepository
+import com.crattendance.utils.JsonHelper
 import com.crattendance.utils.XlsxExporter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -73,5 +74,43 @@ class SettingsViewModel(
             .filter { section == "All" || it.section.toString() == section }
         val attendance = attendanceRepository.getForClass(classId)
         return XlsxExporter.build(cls, students, attendance)
+    }
+
+    /**
+     * Serialises all students to a pretty-printed JSON string.
+     */
+    suspend fun exportStudentsJson(): String =
+        JsonHelper.studentsToJson(studentRepository.getAll())
+
+    /**
+     * Parses [json], upserts each student into the database, and returns a
+     * human-readable summary ("Imported 12 students, 1 error: …").
+     */
+    suspend fun importStudentsJson(json: String): String {
+        val result = JsonHelper.studentsFromJson(json)
+        result.items.forEach { studentRepository.save(it) }
+        return buildSummary("student", result.items.size, result.errors)
+    }
+
+    /**
+     * Serialises all classes to a pretty-printed JSON string.
+     */
+    suspend fun exportClassesJson(): String =
+        JsonHelper.classesToJson(classRepository.getAll())
+
+    /**
+     * Parses [json], upserts each class into the database, and returns a
+     * human-readable summary.
+     */
+    suspend fun importClassesJson(json: String): String {
+        val result = JsonHelper.classesFromJson(json)
+        result.items.forEach { classRepository.save(it) }
+        return buildSummary("class", result.items.size, result.errors)
+    }
+
+    private fun buildSummary(entity: String, count: Int, errors: List<String>): String {
+        val ok  = "Imported $count ${entity}${if (count == 1) "" else "es"}"
+        val err = if (errors.isEmpty()) "" else ", ${errors.size} error(s):\n${errors.take(3).joinToString("\n")}"
+        return ok + err
     }
 }

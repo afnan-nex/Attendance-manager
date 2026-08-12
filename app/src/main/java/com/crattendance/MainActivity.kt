@@ -48,7 +48,9 @@ class MainActivity : FragmentActivity() {
 
     companion object {
         private const val REQ_CREATE_DOC = 1001
+        private const val REQ_OPEN_DOC   = 1002
         private var onDocCreated: ((Uri?) -> Unit)? = null
+        private var onDocOpened:  ((Uri?) -> Unit)? = null
 
         fun launchCreateDoc(
             activity: FragmentActivity,
@@ -69,14 +71,42 @@ class MainActivity : FragmentActivity() {
                 onDocCreated = null
             }
         }
+
+        /** Opens a file-picker for importing a JSON file. */
+        fun launchOpenDoc(
+            activity: FragmentActivity,
+            mimeType: String = "application/json",
+            callback: (Uri?) -> Unit
+        ) {
+            onDocOpened = callback
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = mimeType
+                // Also accept plain-text .json files stored as text/plain
+                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(mimeType, "text/plain"))
+            }
+            try {
+                activity.startActivityForResult(intent, REQ_OPEN_DOC)
+            } catch (e: Exception) {
+                callback(null)
+                onDocOpened = null
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQ_CREATE_DOC) {
-            val uri = if (resultCode == RESULT_OK) data?.data else null
-            onDocCreated?.invoke(uri)
-            onDocCreated = null
+        when (requestCode) {
+            REQ_CREATE_DOC -> {
+                val uri = if (resultCode == RESULT_OK) data?.data else null
+                onDocCreated?.invoke(uri)
+                onDocCreated = null
+            }
+            REQ_OPEN_DOC -> {
+                val uri = if (resultCode == RESULT_OK) data?.data else null
+                onDocOpened?.invoke(uri)
+                onDocOpened = null
+            }
         }
     }
 
