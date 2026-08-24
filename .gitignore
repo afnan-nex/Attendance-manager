@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Android Native Build Outputs & Cache
+android/.gradle/
+android/build/
+android/app/build/
+android/.cxx/
+android/.idea/
+android/app/.cxx/
+*.apk
+*.aab
+
+# Native Keystores & Keys
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Environment variables
+.env
+.env*.local
+
+# System & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

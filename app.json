@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Attendance Manager",
+    "slug": "attendance-manager",
+    "version": "1.0.2",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.attendance.manager",
+      "adaptiveIcon": {
+        "backgroundColor": "#0159A5",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Attendance Manager to use biometric authentication."
+        }
+      ],
+      "expo-sqlite"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
